@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+>
+  <LinearLayout
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+  >
+    <TextView
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content"
+      android:text="Hello World, Thingiverse"
+    />
+    <Button
+      android:id="@+id/btn_login1"
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content"
+      android:text="login first time, browser"
+      />
+    <Button
+      android:id="@+id/btn_login3"
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content"
+      android:text="login (already has accesToken)"
+      />
+    <Button
+      android:id="@+id/btn_featured"
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content"
+      android:text="featured"
+      />
+    <Button
+      android:id="@+id/btn_newest"
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content"
+      android:text="newest"
+      />
+  </LinearLayout>
+</ScrollView>
+
