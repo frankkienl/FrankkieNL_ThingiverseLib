@@ -20,6 +20,13 @@ public class ThingiverseClient {
   private String accesTokenString = "";
   OAuthService service;
 
+  /**
+   * Get instance of ThingClient
+   * @param clientId the id of your app, see thingiverse.com
+   * @param clientSecret the secret of your app, see thingiverse.com
+   * @param clientCallback the callback-url of your app, see thingiverse.com
+   */
+  @ThingMethod(params = {"clientId", "clientSecret", "clientCallback"})
   public ThingiverseClient(String clientId, String clientSecret, String clientCallback) {
     this.clientId = clientId;
     this.clientSecret = clientSecret;
@@ -34,12 +41,14 @@ public class ThingiverseClient {
             .build();
   }
 
-  /**
+  
+   /**
    * Use this when the user has logged in already, and you have the accestoken.
    * The accesToken is used to use further API-calls.
    *
    * @param token
    */
+  @ThingMethod(params = {"token"})
   public void loginWithAccesToken(String token) {
     this.accesTokenString = token;
   }
@@ -64,25 +73,22 @@ public class ThingiverseClient {
    * @param code the code from the browser
    * @return accesToken
    */
+  @ThingMethod(params = {"code"})
   public String loginWithBrowserCode(String code) {
     Verifier v = new Verifier(code);
     Token accessToken = service.getAccessToken(null, v);
     accesTokenString = accessToken.getToken();
     return accesTokenString;
   }
-  public static final String GET = "GET", POST = "POST", PUT = "PUT", DELETE = "DELETE";
-
-  private String call(String method, String url) {
-    Verb verb = Verb.GET;
-    if (POST.equals(method)) {
-      verb = Verb.POST;
-    }
-    if (PUT.equals(method)) {
-      verb = Verb.PUT;
-    }
-    if (DELETE.equals(method)) {
-      verb = Verb.DELETE;
-    }
+  
+  /**
+   * Call api endpoint
+   * @param verb http-method to use, like: GET, POST, PUT, DELETE, PATCH
+   * @param url the api-url to call
+   * @return the output of the api-call, can be a JSON-string
+   */
+  @ThingMethod(params = {"verb", "url"})
+  private String call(Verb verb, String url) {
     String urlEnd = url;
     if (!url.startsWith("/")) {
       urlEnd = "/" + url;
@@ -94,97 +100,215 @@ public class ThingiverseClient {
   }
 
   //USER//
+  /**
+   * Get information about user, us 'me' to get info about the currently logged in user.
+   * @param username the username or 'me'
+   * @return information about the user (JSON)
+   */
+  @ThingMethod(params = {"username"})
   public String user(String username) {
-    return call(GET, "/users/" + username + "/");
+    return call(Verb.GET, "/users/" + username + "/");
   }
 
+  @ThingMethod(params = {"username"})
   public String thingsByUser(String username) {
-    return call(GET, "/users/" + username + "/things");
+    return call(Verb.GET, "/users/" + username + "/things");
   }
 
+  @ThingMethod(params = {"username"})
   public String likesByUser(String username) {
-    return call(GET, "/users/" + username + "/likes");
+    return call(Verb.GET, "/users/" + username + "/likes");
   }
 
+  @ThingMethod(params = {"username"})
   public String copiesByUser(String username) {
-    return call(GET, "/users/" + username + "/copies");
+    return call(Verb.GET, "/users/" + username + "/copies");
+  }
+
+  /**
+   * Update the user's profile
+   *
+   * @param username must be int, get it by calling client.user(me);
+   * @param bio Replace bio
+   * @param location Replace location
+   * @param default_licence One of cc, cc-sa, cc-nd, cc-nc-sa, cc-nc-nd, pd0,
+   * gpl, lgpl, bsd.
+   * @return The updated user
+   */
+  @ThingMethod(params = {"username","bio","location","default_licence"})
+  public String updateUser(String username, String bio, String location, String default_licence) {
+    OAuthRequest request = new OAuthRequest(Verb.POST, "http://api.thingiverse.com/users/" + username + "/");
+    request.addHeader("Authorization", "Bearer " + accesTokenString);
+    if (bio != null) {
+      request.addBodyParameter("bio", bio);
+    }
+    if (location != null) {
+      request.addBodyParameter("location", location);
+    }
+    if (default_licence != null) {
+      request.addBodyParameter("default_licence", default_licence);
+    }
+    Response response = request.send();
+    return response.getBody();
   }
 
   //THINGS//
+  /**
+   *
+   * @param id
+   * @param name
+   * @param licence
+   * @param category
+   * @param description
+   * @param instructions
+   * @param is_wip boolean as string, 'true', 'false'
+   * @param tags comma-separated
+   * @return
+   */
+  @ThingMethod(params = {"id","name","licence","category","description","instructions","is_wip","tags"})
+  public String updateThing(String id, String name, String licence, String category, String description, String instructions, String is_wip, String tags) {
+    OAuthRequest request = new OAuthRequest(Verb.POST, "http://api.thingiverse.com/things/" + id + "/");
+    request.addHeader("Authorization", "Bearer " + accesTokenString);
+    if (name != null) {
+      request.addBodyParameter("name", name);
+    }
+    if (licence != null) {
+      request.addBodyParameter("licence", licence);
+    }
+    if (category != null) {
+      request.addBodyParameter("category", category);
+    }
+    if (description != null) {
+      request.addBodyParameter("description", description);
+    }
+    if (instructions != null) {
+      request.addBodyParameter("instructions", instructions);
+    }
+    if (is_wip != null) {
+      request.addBodyParameter("is_wip", is_wip);
+    }
+    if (tags != null) { //eh waitwut? i guess CSV !!
+      request.addBodyParameter("tags", name);
+    }
+    Response response = request.send();
+    return response.getBody();
+  }
+
+  @ThingMethod(params = {"id"})
   public String thing(String id) {
-    return call(GET, "/things/" + id + "/");
+    return call(Verb.GET, "/things/" + id + "/");
   }
 
+  @ThingMethod(params = {"id"})
   public String imagesBything(String id) {
-    return call(GET, "/things/" + id + "/images/");
+    return call(Verb.GET, "/things/" + id + "/images/");
   }
 
+  @ThingMethod(params = {"id"})
   public String imageBything(String id, String imageId) {
-    return call(GET, "/things/" + id + "/images/" + imageId);
+    return call(Verb.GET, "/things/" + id + "/images/" + imageId);
   }
 
+  @ThingMethod(params = {"id"})
   public String filesByThing(String id) {
-    return call(GET, "/things/" + id + "/files/");
+    return call(Verb.GET, "/things/" + id + "/files/");
   }
-
+  
+  @ThingMethod(params = {"id"})
   public String fileByThing(String id, String fileId) {
-    return call(GET, "/things/" + id + "/files/" + fileId);
+    return call(Verb.GET, "/things/" + id + "/files/" + fileId);
   }
 
+  @ThingMethod(params = {"id"})
   public String likesByThing(String id) {
-    return call(GET, "/things/" + id + "/likes/");
+    return call(Verb.GET, "/things/" + id + "/likes/");
   }
 
+  @ThingMethod(params = {"id"})
   public String ancestorsByThing(String id) {
-    return call(GET, "/things/" + id + "/ancestors/");
+    return call(Verb.GET, "/things/" + id + "/ancestors/");
   }
 
+  @ThingMethod(params = {"id"})
   public String derivaticesByThing(String id) {
-    return call(GET, "/things/" + id + "/derivatices/");
+    return call(Verb.GET, "/things/" + id + "/derivatices/");
   }
 
+  @ThingMethod(params = {"id"})
   public String tagsByThing(String id) {
-    return call(GET, "/things/" + id + "/tags/");
+    return call(Verb.GET, "/things/" + id + "/tags/");
   }
 
+  @ThingMethod(params = {"id"})
   public String categoryByThing(String id) {
-    return call(GET, "/things/" + id + "/categories/");
+    return call(Verb.GET, "/things/" + id + "/categories/");
   }
 
+  @ThingMethod(params = {"id"})
   public String copiesByThing(String id) {
-    return call(GET, "/things/" + id + "/copies/");
+    return call(Verb.GET, "/things/" + id + "/copies/");
   }
 
+  @ThingMethod(params = {"id"})
   public String likeThing(String id) {
-    return call(POST, "/things/" + id + "/likes");
+    return call(Verb.POST, "/things/" + id + "/likes");
   }
 
+  @ThingMethod(params = {"id"})
   public String unlikeThing(String id) {
-    return call(DELETE, "/things/" + id + "/likes");
+    return call(Verb.DELETE, "/things/" + id + "/likes");
   }
 
   //COPIES//
+  @ThingMethod(params = {"id"})
   public String copy(String id) {
-    return call(GET, "/copies/" + id + "/");
+    return call(Verb.GET, "/copies/" + id + "/");
   }
 
+  @ThingMethod(params = {"id"})
   public String imagesByCopy(String id) {
-    return call(GET, "/copies/" + id + "/images");
+    return call(Verb.GET, "/copies/" + id + "/images");
   }
 
+  @ThingMethod(params = {"id"})
   public String deleteCopy(String id) {
-    return call(DELETE, "/copies/" + id + "/");
+    return call(Verb.DELETE, "/copies/" + id + "/");
   }
 
   //COLLECTIONS//
+  /**
+   * Update collection
+   *
+   * @param id
+   * @param name
+   * @param description
+   * @return
+   */
+  @ThingMethod(params = {"id", "name","description"})
+  public String updateCollection(String id, String name, String description) {
+    OAuthRequest request = new OAuthRequest(Verb.POST, "http://api.thingiverse.com/collections/" + id + "/");
+    request.addHeader("Authorization", "Bearer " + accesTokenString);
+    if (name != null) {
+      request.addBodyParameter("name", name);
+    }
+    if (description != null) {
+      request.addBodyParameter("description", description);
+    }
+    Response response = request.send();
+    return response.getBody();
+  }
+
+  @ThingMethod(params = {"id"})
   public String collection(String id) {
-    return call(GET, "/collections/" + id + "/");
+    return call(Verb.GET, "/collections/" + id + "/");
   }
 
+  @ThingMethod(params = {"id"})
   public String thingsByCollection(String id) {
-    return call(GET, "/collections/" + id + "/");
+    return call(Verb.GET, "/collections/" + id + "/");
   }
 
+  @ThingMethod(params = {"name","description"})
   public String newCollection(String name, String description) {
     if (description == null) {
       description = "";
@@ -192,7 +316,7 @@ public class ThingiverseClient {
     if (name == null || "".equals(name)) {
       throw new RuntimeException("name is not optional, http://www.thingiverse.com/developers/rest-api-reference");
     }
-    //return call(POST, "/collections/");
+    //return call(Verb.POST, "/collections/");
     OAuthRequest request = new OAuthRequest(Verb.POST, "http://api.thingiverse.com/collections/");
     request.addHeader("Authorization", "Bearer " + accesTokenString);
     request.addBodyParameter("description", description);
@@ -209,6 +333,7 @@ public class ThingiverseClient {
    * @param description Optional. Reason for ading the Thing
    * @return response
    */
+  @ThingMethod(params = {"collectionId","thingId","description"})
   public String addThingToCollection(String collectionId, String thingId, String description) {
     if (description == null) {
       description = "";
@@ -220,73 +345,86 @@ public class ThingiverseClient {
     return response.getBody();
   }
 
+  @ThingMethod(params = {"collectionId","thingId"})
   public String removeThingFromCollection(String collectionId, String thingId) {
-    return call(DELETE, "/collections/" + collectionId + "/things/" + thingId);
+    return call(Verb.DELETE, "/collections/" + collectionId + "/things/" + thingId);
   }
 
+  @ThingMethod(params = {"id"})
   public String removeCollection(String id) {
-    return call(DELETE, "/collections/" + id);
+    return call(Verb.DELETE, "/collections/" + id);
   }
   //OTHER//
-  
-  public String newest(){
-    return call(GET, "/newest/");
+
+  public String newest() {
+    return call(Verb.GET, "/newest/");
   }
-  
-  public String popular(){
-    return call(GET, "/popular/");
+
+  public String popular() {
+    return call(Verb.GET, "/popular/");
   }
-  
-  public String featured(){
-    return call(GET, "/featured/");
+
+  public String featured() {
+    return call(Verb.GET, "/featured/");
   }
-  
-  public String search(String term){
+
+  @ThingMethod(params = {"term"})
+  public String search(String term) {
     term = term.replaceAll(" ", "+"); //basic url-encode // TODO fix this
-    return call(GET, "/search/" + term + "/");
+    return call(Verb.GET, "/search/" + term + "/");
   }
-  
+
   //CATEGORIES//
   /**
    * List all categories
+   *
    * @return list of all categories
    */
-  public String categories(){
-    return call(GET, "/categories/");
+  public String categories() {
+    return call(Verb.GET, "/categories/");
   }
-  
+
   /**
-   * Get details about category.
-   * Category ids are normalized "slugs". For example, the id for the "Automotive" category's id would be "automotive". The "Replacement Parts" category would have an id of "replacement-parts", etc.
+   * Get details about category. Category ids are normalized "slugs". For
+   * example, the id for the "Automotive" category's id would be "automotive".
+   * The "Replacement Parts" category would have an id of "replacement-parts",
+   * etc.
+   *
    * @param id
    * @return details
    */
-  public String category(String id){
-    return call(GET, "/categories/" + id + "/");
+  @ThingMethod(params = {"id"})
+  public String category(String id) {
+    return call(Verb.GET, "/categories/" + id + "/");
   }
-  
-  public String latestThingsByCategory(String id){
-    return call(GET, "/categories/" + id + "/things");
+
+  @ThingMethod(params = {"id"})
+  public String latestThingsByCategory(String id) {
+    return call(Verb.GET, "/categories/" + id + "/things");
   }
-  
-  public String latestThingsByTag(String id){
-    return call(GET, "/tags/" + id + "/things");
+
+  @ThingMethod(params = {"id"})
+  public String latestThingsByTag(String id) {
+    return call(Verb.GET, "/tags/" + id + "/things");
   }
-  
+
   /**
    * Get all tags
+   *
    * @return list of tags
    */
-  public String tags(){
-    return call(GET, "/tags/");
+  public String tags() {
+    return call(Verb.GET, "/tags/");
   }
-  
+
   /**
    * details about a tag
+   *
    * @return details
    */
-  public String tag(String id){
-    return call(GET, "/tags/" + id + "/");
+  @ThingMethod(params = {"id"})
+  public String tag(String id) {
+    return call(Verb.GET, "/tags/" + id + "/");
   }
   
 }
