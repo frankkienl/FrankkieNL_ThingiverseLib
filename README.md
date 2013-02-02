@@ -1,6 +1,8 @@
 FrankkieNL_ThingiverseLib
 =========================
 
+Youtube Demonstration: http://www.youtube.com/watch?v=WnvH2NOA2xw
+
 Java Library for connecting to the Thingiverse API (Android and 'Desktop' Java)
 
 Getting Started:
